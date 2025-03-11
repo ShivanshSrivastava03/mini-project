@@ -1,0 +1,123 @@
+import tkinter as tk
+from tkinter import messagebox, PhotoImage
+from PIL import Image, ImageTk
+
+def check_winner():
+    for row in board:
+        if row[0]["text"] == row[1]["text"] == row[2]["text"] != "":
+            return row[0]["text"]
+    for col in range(3):
+        if board[0][col]["text"] == board[1][col]["text"] == board[2][col]["text"] != "":
+            return board[0][col]["text"]
+    if board[0][0]["text"] == board[1][1]["text"] == board[2][2]["text"] != "":
+        return board[0][0]["text"]
+    if board[0][2]["text"] == board[1][1]["text"] == board[2][0]["text"] != "":
+        return board[0][2]["text"]
+    return None
+
+def pressed(r, c):
+    global turn, score_x, score_o
+    if board[r][c]["text"] == "" and not game_over:
+        board[r][c]["text"] = turn
+        board[r][c]["fg"] = "red" if turn == "X" else "blue"
+        winner = check_winner()
+        if winner:
+            if winner == "X":
+                score_x += 1
+            else:
+                score_o += 1
+            update_scoreboard()
+            if score_x == 10:
+                messagebox.showinfo("Game Over", "X Wins the Game!")
+                reset_game()
+            elif score_o == 10:
+                messagebox.showinfo("Game Over", "O Wins the Game!")
+                reset_game()
+            else:
+                reset_board()
+        elif all(board[i][j]["text"] != "" for i in range(3) for j in range(3)):
+            messagebox.showinfo("Game Over", "It's a draw!")
+            reset_board()
+        else:
+            turn = "O" if turn == "X" else "X"
+
+def reset_board():
+    global game_over
+    game_over = False
+    for i in range(3):
+        for j in range(3):
+            board[i][j]["text"] = ""
+            board[i][j]["fg"] = "black"
+
+def reset_game():
+    global score_x, score_o
+    score_x = 0
+    score_o = 0
+    update_scoreboard()
+    choose_player()
+
+def update_scoreboard():
+    score_label_x["text"] = f"X Score: {score_x}"
+    score_label_o["text"] = f"O Score: {score_o}"
+
+def choose_player():
+    global turn
+    player_choice_label["text"] = "Choose who starts:" 
+    button_x["state"] = "normal"
+    button_o["state"] = "normal"
+
+def set_turn(player):
+    global turn
+    turn = player
+    player_choice_label["text"] = f"{turn} starts!"
+    button_x["state"] = "disabled"
+    button_o["state"] = "disabled"
+    reset_board()
+
+root = tk.Tk()
+root.title("Tic Tac Toe")
+root.geometry("500x600")
+
+# Load background image
+bg_image = Image.open("gradient-abstract-wireframe-background_23-2149009903.avif")
+bg_image = bg_image.resize((500, 600), Image.ANTIALIAS)
+bg_photo = ImageTk.PhotoImage(bg_image)
+
+canvas = tk.Canvas(root, width=500, height=600)
+canvas.pack(fill="both", expand=True)
+canvas.create_image(0, 0, image=bg_photo, anchor="nw")
+
+game_over = False
+score_x = 0
+score_o = 0
+
+frame = tk.Frame(root, bg="#d3d3d3", padx=20, pady=20)
+frame.place(relx=0.5, rely=0.5, anchor="center")
+
+player_choice_label = tk.Label(frame, text="Choose who starts:", font=("Arial", 14), bg="#d3d3d3")
+player_choice_label.grid(row=0, column=0, columnspan=3)
+
+button_x = tk.Button(frame, text="X", font=("Arial", 14), command=lambda: set_turn("X"))
+button_x.grid(row=1, column=0)
+
+button_o = tk.Button(frame, text="O", font=("Arial", 14), command=lambda: set_turn("O"))
+button_o.grid(row=1, column=2)
+
+board = [[None for _ in range(3)] for _ in range(3)]
+
+for i in range(3):
+    for j in range(3):
+        board[i][j] = tk.Button(frame, text="", font=("Arial", 24), width=5, height=2, command=lambda r=i, c=j: pressed(r, c))
+        board[i][j].grid(row=i+2, column=j)
+
+score_label_x = tk.Label(frame, text="X Score: 0", font=("Arial", 14), bg="#d3d3d3", fg="red")
+score_label_x.grid(row=5, column=0)
+
+score_label_o = tk.Label(frame, text="O Score: 0", font=("Arial", 14), bg="#d3d3d3", fg="blue")
+score_label_o.grid(row=5, column=2)
+
+reset_button = tk.Button(frame, text="Reset", font=("Arial", 14), command=reset_game)
+reset_button.grid(row=5, column=1)
+
+choose_player()
+root.mainloop()
